@@ -13,6 +13,10 @@ def transition_up(input, scope):
 def input_convolution(input):
     return slim.conv2d(input, 1, [3, 3], scope='input_conv')
 
+def output_convolution(input):
+    conv = slim.conv2d(input, 1, [3, 3], scope='output_conv')
+    return tf.nn.softmax(conv)
+
 def transition_down_and_block(input, dims, scope_postfix):
     transition_layer = transition_down(input, 'td_%s' % scope_postfix)
     dense_block_output = dense_block(transition_layer, [1, 1], 'dense_down_%s' % scope_postfix)
@@ -25,8 +29,27 @@ def block_and_transition_up(input, dims, scope_postfix):
 
     return transition_layer
 
-def net():
-    net =
+def net(input):
     net = input_convolution(input)
-    net = transition_down(input)
+    dense_1 = dense_block(net)
+    # Skip connection 1
+    concat_1 = [dense_1 net]
+
+    net = transition_down(concat_1)
+    dense_2 = dense_block(net)
+    concat_2 = [dense_2 net]
+
+    net = transition_down(concat_2)
+    net = dense_block(net)
+    net = transition_up(net)
+
+    net = [concat_2 net]
+    net = dense_block(net)
+    net = transition_up(net)
+
+    net = [concat_1 net]
+    net = dense_block(net)
+
+    net = output_convolution(net)
+
     return net
