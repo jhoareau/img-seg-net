@@ -1,14 +1,5 @@
 import tensorflow.contrib.slim as slim
-
-# from layers import dense_block, transition_down, transition_up
-def dense_block(input, dims, scope):
-    return slim.conv2d(input, 1, [3, 3], scope=scope)
-
-def transition_down(input, scope):
-    return slim.conv2d(input, 1, [3, 3], scope=scope)
-
-def transition_up(input, scope):
-    return slim.conv2d_transpose(input, 1, [3, 3], scope=scope)
+from layers import dense_block, transition_down, transition_up
 
 def input_convolution(input):
     return slim.conv2d(input, 1, [3, 3], scope='input_conv')
