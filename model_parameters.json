@@ -14,7 +14,7 @@
     "dense_5": {
         "num_layers": 12
     },
-    "dense_deep": {
+    "dense_bottleneck": {
       "num_layers": 15
     },
     "dense_1_up": {
