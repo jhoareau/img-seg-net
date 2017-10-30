@@ -11,27 +11,51 @@ def output_convolution(input, num_features, kernel_size):
     return slim.softmax(conv, scope='outputConv_softmax')
 
 def net(input, PARAMS):
-    net = input_convolution(input, PARAMS['input_convolution']['num_features'], PARAMS['input_convolution']['kernel_size'])
-    dense_1, _ = dense_block(net, PARAMS['dense_1']['num_features'], PARAMS['dense_1']['kernel_size'], 'dense1')
+    net = input_convolution(input, PARAMS['num_features'], PARAMS['kernel_size'])
+    dense_1, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense1')
     # Skip connection 1
     concat_1 = tf.concat(axis=-1, values=[dense_1, net], name='skip1')
 
-    net = transition_down(concat_1, PARAMS['transition_down_1']['num_features'], 'td1', PARAMS['transition_down_1']['kernel_size'])
-    dense_2, _ = dense_block(net, PARAMS['dense_2']['num_features'], PARAMS['dense_2']['kernel_size'], 'dense2')
+    net = transition_down(concat_1, PARAMS['num_features'], 'td1', PARAMS['kernel_size'])
+    dense_2, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense2')
     concat_2 = tf.concat(axis=-1, values=[dense_2, net], name='skip2')
 
-    net = transition_down(concat_2, PARAMS['transition_down_2']['num_features'], 'td2', PARAMS['transition_down_2']['kernel_size'])
-    _, layers = dense_block(net, PARAMS['dense_deep']['num_features'], PARAMS['dense_deep']['kernel_size'], 'denseDeep')
-    dense_output = tf.concat(axis=-1, values=layers, name='dense_deep')
-    net = transition_up(dense_output, PARAMS['transition_up_1']['num_features'], 'tu1', PARAMS['transition_up_1']['kernel_size'])
+    net = transition_down(concat_2, PARAMS['num_features'], 'td2', PARAMS['kernel_size'])
+    dense_3, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense3')
+    concat_3 = tf.concat(axis=-1, values=[dense_3, net], name='skip3')
 
-    net = tf.concat(axis=-1, values=[concat_2, net])
-    net, _ = dense_block(net, PARAMS['dense_1_up']['num_features'], PARAMS['dense_1_up']['kernel_size'], 'dense1up')
-    net = transition_up(net, PARAMS['transition_up_2']['num_features'], 'tu2', PARAMS['transition_up_2']['kernel_size'])
+    net = transition_down(concat_3, PARAMS['num_features'], 'td3', PARAMS['kernel_size'])
+    dense_4, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense4')
+    concat_4 = tf.concat(axis=-1, values=[dense_4, net], name='skip4')
 
-    net = tf.concat(axis=-1, values=[concat_1, net])
-    net, _ = dense_block(net, PARAMS['dense_2_up']['num_features'], PARAMS['dense_2_up']['kernel_size'], 'dense2up')
+    net = transition_down(concat_4, PARAMS['num_features'], 'td4', PARAMS['kernel_size'])
+    dense_5, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense5')
+    concat_5 = tf.concat(axis=-1, values=[dense_5, net], name='skip5')
 
-    net = output_convolution(net, PARAMS['output_convolution']['num_features'], PARAMS['output_convolution']['kernel_size'])
+    net = transition_down(concat_5, PARAMS['num_features'], 'td5', PARAMS['kernel_size'])
+    _, dense_deep_layers = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'denseDeep', skipped=False)
+    dense_output = tf.concat(axis=-1, values=dense_deep_layers, name='denseDeep/output')
+    net = transition_up(dense_output, PARAMS['num_features'], 'tu1', PARAMS['kernel_size'])
+
+    net = tf.concat(axis=-1, values=[concat_5, net], name='skip1_up')
+    net, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense1up')
+    net = transition_up(net, PARAMS['num_features'], 'tu2', PARAMS['kernel_size'])
+
+    net = tf.concat(axis=-1, values=[concat_4, net], name='skip2_up')
+    net, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense2up')
+    net = transition_up(net, PARAMS['num_features'], 'tu3', PARAMS['kernel_size'])
+
+    net = tf.concat(axis=-1, values=[concat_3, net], name='skip3_up')
+    net, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense3up')
+    net = transition_up(net, PARAMS['num_features'], 'tu4', PARAMS['kernel_size'])
+
+    net = tf.concat(axis=-1, values=[concat_2, net], name='skip4_up')
+    net, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense4up')
+    net = transition_up(net, PARAMS['num_features'], 'tu5', PARAMS['kernel_size'])
+
+    net = tf.concat(axis=-1, values=[concat_1, net], name='skip5_up')
+    net, _ = dense_block(net, PARAMS['num_features'], PARAMS['kernel_size'], 'dense5up')
+
+    net = output_convolution(net, PARAMS['num_features'], PARAMS['kernel_size'])
 
     return net

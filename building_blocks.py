@@ -1,12 +1,13 @@
 import tensorflow.contrib.slim as slim
 import tensorflow as tf
 
-def dense_block(x, num_layers, num_features, scope, p=0.2):
+def dense_block(x, num_layers, num_features, scope, p=0.2, skipped=True):
     layers = []
     for i in range(num_layers):
         layer = create_layer(x, num_features, p=p, scope=(scope + "/layer" + str(i)))
-        x = tf.concat(axis=-1, values=[x, layer], name=(scope + "/skip" + str(i)))
         layers.append(layer)
+        if (skipped == False and i == num_layers-1): continue
+        x = tf.concat(axis=-1, values=[x, layer], name=(scope + "/skip" + str(i)))
     return x, layers
 
 def create_layer(input, num_features, scope, kernel_size=3, p=0.2):
