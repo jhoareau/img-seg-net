@@ -5,10 +5,31 @@
     "dense_2": {
         "num_layers": 5
     },
+    "dense_3": {
+        "num_layers": 7
+    },
+    "dense_4": {
+        "num_layers": 10
+    },
+    "dense_5": {
+        "num_layers": 12
+    },
     "dense_deep": {
+      "num_layers": 15
     },
     "dense_1_up": {
+      "num_layers": 12
     },
     "dense_2_up": {
+      "num_layers": 10
+    },
+    "dense_3_up": {
+      "num_layers": 7
+    },
+    "dense_4_up": {
+      "num_layers": 5
+    },
+    "dense_5_up": {
+      "num_layers": 4
     }
 }
