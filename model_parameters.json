@@ -1,0 +1,50 @@
+{
+    "input_convolution": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "output_convolution": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "transition_down_1": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "transition_down_2": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "transition_up_1": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "transition_up_2": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_1": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_1": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_2": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_deep": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_1_up": {
+        "kernel_size": 3,
+        "num_features": 3
+    },
+    "dense_2_up": {
+        "kernel_size": 3,
+        "num_features": 3
+    }
+}
