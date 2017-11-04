@@ -31,7 +31,7 @@ with tf.Session() as sess:
     # Obtain the predition
     y_hat, _ = net(xb, params_dict)
     # We calculate the loss
-    loss = tf.losses.mean_squared_error(labels=targets, predictions=predictions)
+    loss = tf.losses.mean_squared_error(labels=yb, predictions=y_hat)
     total_loss = slim.losses.get_total_loss()
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(total_loss, optimizer) 
