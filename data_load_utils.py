@@ -1,6 +1,7 @@
 import numpy as np
 from skimage import io
 import os
+import tensorflow as tf
 
 # Define data import paths
 # Download the dataset and extract the CamVid folder to a location of your choosing
@@ -41,6 +42,23 @@ def loadimages(x_image,y_image):
         y.append(io.imread(image))
     return x, y
 
-# To load the  test images into x and y, do the following:	
+# To load the  test images into x and y, do the following:    
 #    locx, locy = parsepaths(test_paths)
 #    x, y = loadimages(locx, locy)
+
+batchnumber=0
+batchsize=10
+def nextbatch(x_in, y_in, batchnumber=batchnumber, batchsize=batchsize):
+    startindex=batchnumber*batchsize
+    stopindex=startindex+batchsize
+    batchnumber+=1
+    return x_in[startindex:stopindex], y_in[startindex:stopindex]
+
+def tensorreshape(x_in, y_in, batch_size, width, height, nchannels):
+    x_in=np.reshape(x_in, (batch_size, height, width, nchannels))
+    y_in=np.reshape(y_in, (batch_size, height, width, 1))
+    reshaped_image_x = tf.cast(x_in, tf.float32)
+    xr=tf.reshape(reshaped_image_x, shape=(batch_size, width, height, nchannels))
+    reshaped_image_y = tf.cast(y_in, tf.float32)
+    yr=tf.reshape(reshaped_image_y, shape=(batch_size, width, height, 1))
+    return xr, yr
