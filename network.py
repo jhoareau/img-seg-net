@@ -5,7 +5,7 @@ from building_blocks import dense_block, transition_down, transition_up
 
 
 def net(input, PARAMS):
-    net = slim.conv2d(input, PARAMS['num_features'],
+    net = slim.conv2d(input, PARAMS['input_num_features'],
                       3, scope='inputConv', activation_fn=None)
     dense_down = list()
     for i in range(1, 6):
