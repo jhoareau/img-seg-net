@@ -5,7 +5,7 @@ from data_load_utils import *
 import numpy as np
 
 batch_size, height, width, nchannels = 10, 360, 480, 3
-learning_rate=0.005
+learning_rate=0.001
 
 locx, locy = parsepaths(train_paths)
 x_im, y_im = loadimages(locx, locy)
@@ -28,8 +28,8 @@ with tf.Session() as sess:
     # We load a batch and reshape to tensor
     xbatch, ybatch = nextbatch(x_im, y_im, batchnumber=0, batchsize=batch_size)
     xb, yb = tensorreshape(xbatch, ybatch, batch_size, width, height, nchannels)
-    # Obtain the predition
-    y_hat, _ = net(xb, params_dict)
+    # Obtain the prediction
+    y_hat = net(xb, params_dict)
     # We calculate the loss
     loss = tf.losses.mean_squared_error(labels=yb, predictions=y_hat)
     total_loss = slim.losses.get_total_loss()

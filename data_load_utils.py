@@ -61,4 +61,7 @@ def tensorreshape(x_in, y_in, batch_size, width, height, nchannels):
     xr=tf.reshape(reshaped_image_x, shape=(batch_size, width, height, nchannels))
     reshaped_image_y = tf.cast(y_in, tf.float32)
     yr=tf.reshape(reshaped_image_y, shape=(batch_size, width, height, 1))
-    return xr, yr
+    xrc=tf.image.resize_image_with_crop_or_pad(xr, 320,320)
+    yrc=tf.image.resize_image_with_crop_or_pad(yr, 320,320)
+    return xrc, yrc
+
