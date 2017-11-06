@@ -27,4 +27,4 @@ def net(input, PARAMS):
         net, _ = dense_block(net, PARAMS['dense_{}_up'.format(
             i)]['num_layers'], PARAMS['num_features'], 'dense{}up'.format(i))
 
-    return slim.conv2d(net, PARAMS['num_features'], 3, scope='outputConv', activation_fn=None)
+    return slim.conv2d(net, PARAMS['output_classes'], 1, scope='outputConv', activation_fn=None)
