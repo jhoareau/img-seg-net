@@ -26,6 +26,7 @@ def _bytes_feature(value):
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
+reader = tf.TFRecordReader 
 
 original_images = []
 
@@ -135,7 +136,7 @@ def slim_dataset(tfrec_location, num_samples):
     return dataset
 
 # Convert to a tensor and resize    
-def imagepreprocessor(image, height, width, annot=False):
+def imagepreprocessor(image, height, width, annot=False, scope=None):
     if annot:
         scopename="annotation"
     else:
@@ -145,7 +146,7 @@ def imagepreprocessor(image, height, width, annot=False):
         if image.dtype != tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.expand_dims(image, 0)
-        image = tf.image.resize_image_with_crop_or_pad(image=raw_image, target_height=height, target_width=width)
+        image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=height, target_width=width)
     return image
 
 # Load a batch
@@ -162,8 +163,8 @@ def batch(dataset,batch_size=3, height=360, width=480, resized=224): # Resize to
     raw_image, raw_annotation = data_provider.get(['image', 'annotation'])
 
     # Do image preprocessing
-    image=tf.image.resize_image_with_crop_or_pad(image=raw_image, target_height=IMAGE_HEIGHT, target_width=IMAGE_WIDTH)
-    annotation=tf.image.resize_image_with_crop_or_pad(image=raw_annotation, target_height=IMAGE_HEIGHT, target_width=IMAGE_WIDTH)
+    image=imagepreprocessor(image=raw_image, height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
+    annotation=imagepreprocessor(image=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, annot=True)
 
     # Reshape and batch
     raw_image = tf.expand_dims(raw_image, 0)
