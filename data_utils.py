@@ -143,7 +143,7 @@ def imagepreprocessor(image, height, width, annot=False, scope=None):
         scopename="image"
     with tf.name_scope(scope, scopename, [image, height, width]):
         # If image is not save as float yet, we have to convert it
-        if image.dtype != tf.float32:
+        if image.dtype != tf.float32 and annot==False:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.expand_dims(image, 0)
         image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=height, target_width=width)
