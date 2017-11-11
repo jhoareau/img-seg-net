@@ -4,7 +4,7 @@ import json
 from data_utils import *
 import numpy as np
 slim = tf.contrib.slim
-
+image_in_tensorboard=True # This might increase training time, so set to False if desired 
 batch_size, height, width, nchannels = 3, 360, 480, 3
 learning_rate = 0.001
 
@@ -40,7 +40,12 @@ with tf.Session() as sess:
         one_hot_labels)
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
-
+    if(image_in_tensorboard):
+        tf.summary.image("x",xbatch[0],max_outputs=1)
+        tf.summary.image("y",ybatch[0],max_outputs=1)
+        predim=tf.nn.softmax(predictions)
+        predimmax = tf.expand_dims(tf.cast(tf.argmax(predim, axis=3), tf.float32),-1)
+        tf.summary.image("y_hat",predimmax,max_outputs=1)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(total_loss, optimizer, summarize_gradients=True)
     final_loss = slim.learning.train(
