@@ -20,8 +20,9 @@ params_dict['num_features'] = 16
 tfrec_dump(train_paths, "trainset.tfrec")
 tfsdataset = slim_dataset("trainset.tfrec", 367)
 
+gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 # Training loop
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     log_dir = 'train'
     # We load a batch and reshape to tensor
     xbatch, _, ybatch, _ = batch(tfsdataset, batch_size=3, height=360, width=480, resized=224)

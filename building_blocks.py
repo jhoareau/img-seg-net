@@ -1,6 +1,10 @@
 import tensorflow.contrib.slim as slim
 import tensorflow as tf
 
+l2_reg = slim.l2_regularizer(0.0001)
+regularizers = {"beta" : slim.l2_regularizer(0.0001), "gamma": slim.l2_regularizer(0.0001)}
+# weight_initializer = tf.contrib.layers.xavier_initializer()
+weight_initializer = tf.contrib.keras.initializers.he_uniform()
 
 def dense_block(x, num_layers, num_features, scope, p=0.2, skipped=True):
     layers = []
@@ -17,18 +21,23 @@ def dense_block(x, num_layers, num_features, scope, p=0.2, skipped=True):
 
 def create_layer(input, num_features, scope, kernel_size=3, p=0.2):
     relud_batch_norm = slim.batch_norm(
-        input, activation_fn=tf.nn.relu, scope=(scope + "/batchnorm"))
+        input, activation_fn=tf.nn.relu, param_regularizers=regularizers,
+        scope=(scope + "/batchnorm"))
     conv = slim.conv2d(relud_batch_norm, num_features,
-                       kernel_size, scope=(scope + "/conv"), activation_fn=None)
+                       kernel_size, weights_initializer=weight_initializer,
+                       weights_regularizer=l2_reg,
+                       scope=(scope + "/conv"), activation_fn=None)
     dropout = slim.dropout(conv, p, scope=(scope + "/dropout"))
     return dropout
 
 
 def transition_down(input, num_features, scope, kernel_size=1, pool_size=2, p=0.2):
-    relud_batch_norm = slim.batch_norm(
-        input, activation_fn=tf.nn.relu, scope=(scope + "/batchnorm"))
+    relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu, 
+         param_regularizers=regularizers, scope=(scope + "/batchnorm"))
     conv = slim.conv2d(relud_batch_norm, num_features,
-                       kernel_size, scope=(scope + "/conv"), activation_fn=None)
+                       kernel_size, weights_initializer=weight_initializer,
+                       weights_regularizer=l2_reg,
+                       scope=(scope + "/conv"), activation_fn=None)
     dropout = slim.dropout(conv, p, scope=(scope + "/dropout"))
     max_pool = slim.max_pool2d(
         dropout, pool_size, stride=2, scope=(scope + "/maxpool"))
@@ -37,4 +46,6 @@ def transition_down(input, num_features, scope, kernel_size=1, pool_size=2, p=0.
 
 def transition_up(input, num_features, scope, kernel_size=3, stride=2):
     return slim.conv2d_transpose(input, num_features, kernel_size,
+                                 weights_initializer=weight_initializer,
+                                 weights_regularizer=l2_reg,
                                  stride=stride, scope=scope, activation_fn=None)
