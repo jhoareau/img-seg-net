@@ -50,7 +50,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         predimmax = tf.expand_dims(
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         tf.summary.image("y_hat", predimmax, max_outputs=1)
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, decay=0.995)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
     final_loss = slim.learning.train(
