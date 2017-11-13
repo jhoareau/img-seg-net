@@ -32,7 +32,7 @@ def create_layer(input, num_features, scope, kernel_size=3, p=0.2):
 
 
 def transition_down(input, num_features, scope, kernel_size=1, pool_size=2, p=0.2):
-    relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu, 
+    relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu,
          param_regularizers=regularizers, scope=(scope + "/batchnorm"))
     conv = slim.conv2d(relud_batch_norm, num_features,
                        kernel_size, weights_initializer=weight_initializer,
