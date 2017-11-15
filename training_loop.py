@@ -30,7 +30,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         tfsdataset, batch_size=3, height=360, width=480, resized=224)
     input_batch = tf.reshape(xbatch, shape=(batch_size, 224, 224, 3))
     ground_truth_batch = tf.reshape(ybatch, shape=(batch_size, 224, 224, 1))
-
+        
     # Obtain the prediction
     predictions = net(input_batch, params_dict)
 
@@ -44,12 +44,16 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
     if(image_in_tensorboard):
+        yb=tf.cast(tf.divide(ybatch[0],11), tf.float32)
         tf.summary.image("x", xbatch[0], max_outputs=1)
-        tf.summary.image("y", ybatch[0], max_outputs=1)
+        tf.summary.image("y", yb, max_outputs=1)
         predim = tf.nn.softmax(predictions)
         predimmax = tf.expand_dims(
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
+        predimmax = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmax, max_outputs=1)
+        ediff=tf.abs(tf.subtract(yb,predimmax))
+        tf.summary.image("Error difference", ediff, max_outputs=1)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)

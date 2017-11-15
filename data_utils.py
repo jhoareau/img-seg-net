@@ -17,6 +17,7 @@ import numpy as np
 import skimage.io as io
 import tensorflow as tf
 import os
+import random
 slim = tf.contrib.slim
 
 # Functions to store images, integers and strings in Tensorrec format
@@ -155,7 +156,7 @@ def slim_dataset(tfrec_location, num_samples):
 # Convert to a tensor and resize
 
 
-def imagepreprocessor(image, height, width, annot=False, scope=None):
+def imagepreprocessor(image, height, width, depth, seed, annot=False, scope=None):
     if annot:
         scopename = "annotation"
     else:
@@ -165,12 +166,12 @@ def imagepreprocessor(image, height, width, annot=False, scope=None):
         if image.dtype != tf.float32 and annot == False:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.expand_dims(image, 0)
-        image = tf.image.resize_image_with_crop_or_pad(
-            image=image, target_height=height, target_width=width)
+        image = tf.random_crop(
+            image, size=[1, height, width, depth], seed=seed)
     return image
 
 # Load a batch
-
+    
 
 def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize to a multiple of 32
     IMAGE_HEIGHT = IMAGE_WIDTH = resized
@@ -185,10 +186,11 @@ def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize 
     raw_image, raw_annotation = data_provider.get(['image', 'annotation'])
 
     # Do image preprocessing
+    seed=random.randint(0,1e10)
     image = imagepreprocessor(
-        image=raw_image, height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
+        image=raw_image, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=3, seed=seed)
     annotation = imagepreprocessor(
-        image=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, annot=True)
+        image=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=1, seed=seed, annot=True)
 
     # Reshape and batch
     raw_image = tf.expand_dims(raw_image, 0)
