@@ -1,4 +1,42 @@
 {
+  "56": {
+    "num_features": 10,
+    "dense_1": {
+        "num_layers": 4
+    },
+    "dense_2": {
+        "num_layers": 4
+    },
+    "dense_3": {
+        "num_layers": 4
+    },
+    "dense_4": {
+        "num_layers": 4
+    },
+    "dense_5": {
+        "num_layers": 4
+    },
+    "dense_bottleneck": {
+      "num_layers": 15
+    },
+    "dense_1_up": {
+      "num_layers": 4
+    },
+    "dense_2_up": {
+      "num_layers": 4
+    },
+    "dense_3_up": {
+      "num_layers": 4
+    },
+    "dense_4_up": {
+      "num_layers": 4
+    },
+    "dense_5_up": {
+      "num_layers": 4
+    }
+  },
+  "103": {
+    "num_features": 16,
     "dense_1": {
         "num_layers": 4
     },
@@ -32,4 +70,5 @@
     "dense_5_up": {
       "num_layers": 4
     }
+  }
 }
