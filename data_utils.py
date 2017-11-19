@@ -156,26 +156,28 @@ def slim_dataset(tfrec_location, num_samples):
 # Convert to a tensor and resize
 
 
-def imagepreprocessor(image, height, width, depth, seed, annot=False, scope=None):
-    if annot:
-        scopename = "annotation"
-    else:
-        scopename = "image"
-    with tf.name_scope(scope, scopename, [image, height, width]):
-        # If image is not save as float yet, we have to convert it
-        if image.dtype != tf.float32 and annot == False:
+def imagepreprocessor(image, annot, height, width, scope=None):
+    scopename="crop"
+    with tf.name_scope(scope, scopename, [image, annot, height, width]):
+        seed=random.randint(0,1e10)
+        # First the image
+        if image.dtype != tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.expand_dims(image, 0)
         image = tf.random_crop(
-            image, size=[1, height, width, depth], seed=seed)
-    return image
+            image, size=[1, height, width, 3], seed=seed)
+        # The the annotation
+        annot = tf.expand_dims(annot, 0)
+        annot = tf.random_crop(
+            annot, size=[1, height, width, 1], seed=seed)
+    return image, annot
 
 # Load a batch
     
 
 def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize to a multiple of 32
     IMAGE_HEIGHT = IMAGE_WIDTH = resized
-
+    
     # First create the data_provider object
     data_provider = slim.dataset_data_provider.DatasetDataProvider(
         dataset,
@@ -186,11 +188,8 @@ def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize 
     raw_image, raw_annotation = data_provider.get(['image', 'annotation'])
 
     # Do image preprocessing
-    seed=random.randint(0,1e10)
-    image = imagepreprocessor(
-        image=raw_image, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=3, seed=seed)
-    annotation = imagepreprocessor(
-        image=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=1, seed=seed, annot=True)
+    image, annotation = imagepreprocessor(
+        image=raw_image, annot=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
 
     # Reshape and batch
     raw_image = tf.expand_dims(raw_image, 0)
