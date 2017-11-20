@@ -175,7 +175,7 @@ def random_crop_image_and_labels(image, labels, feature_maps_image, feature_maps
         seed=seed)
     combined_crop = tf.reshape(combined_crop, shape=(height, width, feature_maps_image + feature_maps_annot))
     crop_feature_maps = tf.unstack(combined_crop, axis=-1)
-    return crop_feature_maps[:feature_maps_image], crop_feature_maps[feature_maps_image:]
+    return tf.stack(crop_feature_maps[:feature_maps_image], axis=-1), tf.stack(crop_feature_maps[feature_maps_image:], axis=-1)
 
 # Convert to a tensor and resize
 def imagepreprocessor(image, annot, height, width, scope=None):
