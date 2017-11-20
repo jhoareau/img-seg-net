@@ -153,31 +153,53 @@ def slim_dataset(tfrec_location, num_samples):
 
     return dataset
 
+def random_crop_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
+    """Randomly crops `image` together with `labels`.
+    Based on <https://stackoverflow.com/questions/42147427/tensorflow-how-to-randomly-crop-input-images-and-labels-in-the-same-way>
+
+    Args:
+    image: A Tensor with shape [D_1, ..., D_K, N]
+    labels: A Tensor with shape [D_1, ..., D_K, M]
+    size: A Tensor with shape [K] indicating the crop size.
+    Returns:
+    A tuple of (cropped_image, cropped_label).
+    """
+    seed = random.randint(0, 1e10)
+    combined = tf.concat([image, labels], axis=-1)
+
+    last_label_dim = tf.shape(labels)[-1]
+    last_image_dim = tf.shape(image)[-1]
+    combined_crop = tf.random_crop(
+        combined,
+        size=[height, width, feature_maps_image + feature_maps_annot],
+        seed=seed)
+    combined_crop = tf.reshape(combined_crop, shape=(height, width, feature_maps_image + feature_maps_annot))
+    crop_feature_maps = tf.unstack(combined_crop, axis=-1)
+    return crop_feature_maps[:feature_maps_image], crop_feature_maps[feature_maps_image:]
+
 # Convert to a tensor and resize
-
-
 def imagepreprocessor(image, annot, height, width, scope=None):
     scopename="crop"
     with tf.name_scope(scope, scopename, [image, annot, height, width]):
-        seed=random.randint(0,1e10)
         # First the image
         if image.dtype != tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
-        image = tf.expand_dims(image, 0)
-        image = tf.random_crop(
-            image, size=[1, height, width, 3], seed=seed)
-        # The the annotation
-        annot = tf.expand_dims(annot, 0)
-        annot = tf.random_crop(
-            annot, size=[1, height, width, 1], seed=seed)
-    return image, annot
+        if annot.dtype != tf.float32:
+            annot = tf.image.convert_image_dtype(annot, dtype=tf.float32)
+        image, annot = random_crop_image_and_labels(
+                                image, annot,
+                                feature_maps_image=3,
+                                feature_maps_annot=1,
+                                height=height,
+                                width=width)
+    return tf.expand_dims(image, 0), tf.expand_dims(tf.image.convert_image_dtype(annot, dtype=tf.uint8), 0)
 
 # Load a batch
 
 
 def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize to a multiple of 32
     IMAGE_HEIGHT = IMAGE_WIDTH = resized
-    
+
     # First create the data_provider object
     data_provider = slim.dataset_data_provider.DatasetDataProvider(
         dataset,
@@ -192,20 +214,20 @@ def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize 
         image=raw_image, annot=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
 
     # Reshape and batch
-    raw_image = tf.expand_dims(raw_image, 0)
+    '''raw_image = tf.expand_dims(raw_image, 0)
     raw_image = tf.image.resize_nearest_neighbor(raw_image, [height, width])
     raw_image = tf.squeeze(raw_image)
 
     raw_annotation = tf.expand_dims(raw_annotation, 0)
     raw_annotation = tf.image.resize_nearest_neighbor(
         raw_annotation, [height, width])
-    raw_annotation = tf.squeeze(raw_annotation)
+    raw_annotation = tf.squeeze(raw_annotation)'''
 
     # Loaded batch
-    images, raw_images, annotations, raw_annotations = tf.train.batch(
-        [image, raw_image, annotation, raw_annotation],
+    images, annotations = tf.train.batch(
+        [image, annotation],
         batch_size=batch_size,
         num_threads=4,
         capacity=4 * batch_size,
         allow_smaller_final_batch=True)
-    return images, raw_images, annotations, raw_annotations
+    return images, annotations

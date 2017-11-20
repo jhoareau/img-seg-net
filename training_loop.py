@@ -32,12 +32,13 @@ gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     log_dir = 'train'
     # We load a batch and reshape to tensor
-    xbatch, _, ybatch, _ = batch(
+    xbatch, ybatch = batch(
         tfsdataset, batch_size=batch_size, height=height, width=width, resized=final_resized)
     input_batch = tf.reshape(xbatch, shape=(batch_size, final_resized, final_resized, 3))
     ground_truth_batch = tf.reshape(ybatch, shape=(batch_size, final_resized, final_resized, 1))
 
     # Obtain the prediction
+    # predictions = slim.conv2d(input_batch, 1, 1)
     predictions = net(input_batch, params_dict)
 
     # We calculate the loss
