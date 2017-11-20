@@ -35,8 +35,8 @@ reader = tf.TFRecordReader
 
 original_images = []
 
-path_separator = "\\"  # How your OS separates paths
-data_root = "..\\CamVid"  # Where you unzipped the CamVid dataset
+path_separator = "/"  # How your OS separates paths
+data_root = "../CamVid"  # Where you unzipped the CamVid dataset
 test_paths = data_root + path_separator + "test.txt"
 train_paths = data_root + path_separator + "train.txt"
 valid_paths = data_root + path_separator + "valid.txt"
@@ -173,7 +173,7 @@ def imagepreprocessor(image, annot, height, width, scope=None):
     return image, annot
 
 # Load a batch
-    
+
 
 def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize to a multiple of 32
     IMAGE_HEIGHT = IMAGE_WIDTH = resized
