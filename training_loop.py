@@ -34,11 +34,12 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     # We load a batch and reshape to tensor
     xbatch, ybatch = batch(
         tfsdataset, batch_size=batch_size, height=height, width=width, resized=final_resized)
-    input_batch = tf.reshape(xbatch, shape=(batch_size, final_resized, final_resized, 3))
-    ground_truth_batch = tf.reshape(ybatch, shape=(batch_size, final_resized, final_resized, 1))
+    input_batch = tf.reshape(xbatch, shape=(
+        batch_size, final_resized, final_resized, 3))
+    ground_truth_batch = tf.reshape(ybatch, shape=(
+        batch_size, final_resized, final_resized, 1))
 
     # Obtain the prediction
-    # predictions = slim.conv2d(input_batch, 1, 1)
     predictions = net(input_batch, params_dict)
 
     # We calculate the loss
@@ -50,8 +51,9 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         one_hot_labels)
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
-    if(image_in_tensorboard):
-        yb=tf.cast(tf.divide(ybatch[0],11), tf.float32)
+
+    if (image_in_tensorboard):
+        yb = tf.cast(tf.divide(ybatch[0], 11), tf.float32)
         tf.summary.image("x", xbatch[0], max_outputs=1)
         tf.summary.image("y", yb, max_outputs=1)
         predim = tf.nn.softmax(predictions)
@@ -59,12 +61,14 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmax = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmax, max_outputs=1)
-        ediff=tf.abs(tf.subtract(yb,predimmax))
+        ediff = tf.abs(tf.subtract(yb, predimmax))
         tf.summary.image("Error difference", ediff, max_outputs=1)
+
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
-    print("Number of trainable parameters", np.sum([np.prod(v.shape) for v in tf.trainable_variables()]))
+    print("Number of trainable parameters", np.sum(
+        [np.prod(v.shape) for v in tf.trainable_variables()]))
     final_loss = slim.learning.train(
         train_op, logdir=log_dir, number_of_steps=10000, save_summaries_secs=10, log_every_n_steps=50)
 
