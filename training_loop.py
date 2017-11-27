@@ -73,6 +73,9 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     print("Number of trainable parameters", np.sum(
         [np.prod(v.shape) for v in tf.trainable_variables()]))
     final_loss = slim.learning.train(
-        train_op, logdir=log_dir, number_of_steps=10000, save_summaries_secs=10, log_every_n_steps=50)
+        train_op, logdir=log_dir,
+        save_interval_secs=300,
+        save_summaries_secs=30,
+        log_every_n_steps=100)
 
 print("Done. With final loss: %s" % final_loss)

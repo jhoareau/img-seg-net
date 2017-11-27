@@ -7,7 +7,7 @@ import json
 from data_utils import *
 slim = tf.contrib.slim
 
-n_images = 101
+n_images = 5
 
 batch_size, height, width, nchannels = n_images, 360, 480, 3
 final_resized = 224
@@ -60,6 +60,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     slim.evaluation.evaluate_once(
         '',
-        'train_aws/model.ckpt-934',
+        'train_aws/model.ckpt-1693',
         'val'
     )
