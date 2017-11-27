@@ -13,7 +13,7 @@ batch_size, height, width, nchannels = 3, 360, 480, 3
 final_resized = 224
 # final_resized = 192
 learning_rate = 0.001
-model_version = 56
+model_version = 103
 
 with open('model_parameters.json') as params:
     params_dict = json.load(params)[repr(model_version)]
@@ -46,15 +46,23 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
         params_dict['output_classes'])
+
+    '''class_weights = [1.0 for i in range(params_dict['output_classes'] - 1)]
+    class_weights.append(0.0)
+    masked_weights = tf.reduce_sum(tf.multiply(one_hot_labels, class_weights), 1)'''
+
+    masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
+
     slim.losses.softmax_cross_entropy(
         predictions,
-        one_hot_labels)
+        one_hot_labels,
+        weights=masked_weights)
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
 
     if (image_in_tensorboard):
-        yb = tf.cast(tf.divide(ybatch[0], 11), tf.float32)
-        tf.summary.image("x", xbatch[0], max_outputs=1)
+        yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
+        tf.summary.image("x", input_batch, max_outputs=1)
         tf.summary.image("y", yb, max_outputs=1)
         predim = tf.nn.softmax(predictions)
         predimmax = tf.expand_dims(
@@ -63,6 +71,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         tf.summary.image("y_hat", predimmax, max_outputs=1)
         ediff = tf.abs(tf.subtract(yb, predimmax))
         tf.summary.image("Error difference", ediff, max_outputs=1)
+        tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
