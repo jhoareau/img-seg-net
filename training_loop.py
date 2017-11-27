@@ -9,9 +9,7 @@ slim = tf.contrib.slim
 # This might increase training time, so set to False if desired
 image_in_tensorboard = True
 batch_size, height, width, nchannels = 3, 360, 480, 3
-# batch_size, height, width, nchannels = 3, 240, 320, 3
 final_resized = 224
-# final_resized = 192
 learning_rate = 0.001
 model_version = 56
 
@@ -46,10 +44,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
         params_dict['output_classes'])
-
-    '''class_weights = [1.0 for i in range(params_dict['output_classes'] - 1)]
-    class_weights.append(0.0)
-    masked_weights = tf.reduce_sum(tf.multiply(one_hot_labels, class_weights), 1)'''
 
     masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
 
