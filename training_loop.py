@@ -13,7 +13,7 @@ batch_size, height, width, nchannels = 3, 360, 480, 3
 final_resized = 224
 # final_resized = 192
 learning_rate = 0.001
-model_version = 103
+model_version = 56
 
 with open('model_parameters.json') as params:
     params_dict = json.load(params)[repr(model_version)]

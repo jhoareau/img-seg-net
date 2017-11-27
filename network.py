@@ -11,22 +11,24 @@ def net(input, PARAMS, is_training=True):
     dense_down = list()
     for i in range(1, 6):
         dense_k, _ = dense_block(net, PARAMS['dense_{}'.format(i)]['num_layers'],
-            PARAMS['dense_{}'.format(i)]['num_features'], 'dense{}'.format(i), is_training=is_training)
+            PARAMS['num_features'], 'dense{}'.format(i), is_training=is_training)
         net = transition_down(
-            dense_k, 48 + PARAMS['num_features'] * i, 'td{}'.format(i), is_training=is_training)
+            dense_k, PARAMS['td{}'.format(i)]['num_features'], 'td{}'.format(i), is_training=is_training)
         dense_down.append(dense_k)
 
     _, dense_deep_layers = dense_block(
-        net, PARAMS['dense_bottleneck']['num_layers'], 48 + PARAMS['num_features'] * 6, 'denseBottleneck', skipped=False, is_training=is_training)
+        net, PARAMS['dense_bottleneck']['num_layers'], PARAMS['num_features'], 'denseBottleneck', skipped=False, is_training=is_training)
     net = tf.concat(axis=-1, values=dense_deep_layers,
                     name='denseBottleneck/output')
 
     for i in range(1, 6):
-        net = transition_up(net, PARAMS['num_features'], 'tu{}'.format(i))
+        count = PARAMS['tu{}'.format(i)]['num_features'] - PARAMS['td{}'.format(6-i)]['num_features']
+        count = count - PARAMS['dense_{}_up'.format(i)]['num_layers'] * PARAMS['num_features']
+        net = transition_up(net, count, 'tu{}'.format(i))
         net = tf.concat(
             axis=-1, values=[dense_down[-i], net], name=('skip{}_up'.format(i)))
         net, _ = dense_block(net, PARAMS['dense_{}_up'.format(i)]['num_layers'],
-            PARAMS['dense_{}_up'.format(i)]['num_features'], 'dense{}up'.format(i), is_training=is_training)
+            PARAMS['num_features'], 'dense{}up'.format(i), is_training=is_training)
 
     return slim.conv2d(net, PARAMS['output_classes'], 1,
             weights_initializer=weight_initializer, weights_regularizer=l2_reg,
