@@ -89,36 +89,6 @@ def tfrec_dump(dataset_paths, save_path):  # Either test_paths, train_paths or v
         writer.write(example.SerializeToString())
     writer.close()
 
-# This function is mostly for debug purposes
-
-
-def tfrec_load(tfrec_file):
-    loaded_data = []
-    record_iterator = tf.python_io.tf_record_iterator(path=tfrec_file)
-    for string_record in record_iterator:
-
-        example = tf.train.Example()
-        example.ParseFromString(string_record)
-
-        height = int(
-            example.features.feature['image/height'].int64_list.value[0])
-        width = int(
-            example.features.feature['image/width'].int64_list.value[0])
-        file_name = (example.features.feature['file_name'].bytes_list.value[0])
-        img_string = (
-            example.features.feature['image/encoded'].bytes_list.value[0])
-        annot_string = (
-            example.features.feature['annotation/encoded'].bytes_list.value[0])
-
-        # The 1D string to array
-        img_1d = np.fromstring(img_string, dtype=np.uint8)
-        loaded_photo = img_1d.reshape((height, width, -1))
-
-        annot_1d = np.fromstring(annot_string, dtype=np.uint8)
-        loaded_annot = annot_1d.reshape((height, width))
-        loaded_data.append((loaded_photo, loaded_annot, file_name))
-    return loaded_data
-
 # Build the tfslim decoder and tfslim dataset
 
 
