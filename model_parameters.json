@@ -4,35 +4,65 @@
     "dense_1": {
         "num_layers": 4
     },
+    "td1": {
+        "num_features": 96
+    },
     "dense_2": {
         "num_layers": 4
+    },
+    "td2": {
+        "num_features": 144
     },
     "dense_3": {
         "num_layers": 4
     },
+    "td3": {
+        "num_features": 192
+    },
     "dense_4": {
         "num_layers": 4
+    },
+    "td4": {
+        "num_features": 240
     },
     "dense_5": {
         "num_layers": 4
     },
+    "td5": {
+        "num_features": 288
+    },
     "dense_bottleneck": {
-      "num_layers": 15
+        "num_layers": 15
+    },
+    "tu1": {
+        "num_features": 384
     },
     "dense_1_up": {
-      "num_layers": 4
+        "num_layers": 4
+    },
+    "tu2": {
+        "num_features": 336
     },
     "dense_2_up": {
-      "num_layers": 4
+        "num_layers": 4
+    },
+    "tu3": {
+        "num_features": 288
     },
     "dense_3_up": {
-      "num_layers": 4
+        "num_layers": 4
+    },
+    "tu4": {
+        "num_features": 240
     },
     "dense_4_up": {
-      "num_layers": 4
+        "num_layers": 4
+    },
+    "tu5": {
+        "num_features": 192
     },
     "dense_5_up": {
-      "num_layers": 4
+        "num_layers": 4
     }
   },
   "103": {
@@ -40,35 +70,65 @@
     "dense_1": {
         "num_layers": 4
     },
+    "td1": {
+        "num_features": 112
+    },
     "dense_2": {
         "num_layers": 5
+    },
+    "td2": {
+        "num_features": 192
     },
     "dense_3": {
         "num_layers": 7
     },
+    "td3": {
+        "num_features": 304
+    },
     "dense_4": {
         "num_layers": 10
+    },
+    "td4": {
+        "num_features": 464
     },
     "dense_5": {
         "num_layers": 12
     },
+    "td5": {
+        "num_features": 656
+    },
     "dense_bottleneck": {
-      "num_layers": 15
+        "num_layers": 15
+    },
+    "tu1": {
+        "num_features": 1088
     },
     "dense_1_up": {
-      "num_layers": 12
+        "num_layers": 12
+    },
+    "tu2": {
+        "num_features": 816
     },
     "dense_2_up": {
-      "num_layers": 10
+        "num_layers": 10
+    },
+    "tu3": {
+        "num_features": 576
     },
     "dense_3_up": {
-      "num_layers": 7
+        "num_layers": 7
+    },
+    "tu4": {
+        "num_features": 384
     },
     "dense_4_up": {
-      "num_layers": 5
+        "num_layers": 5
+    },
+    "tu5": {
+        "num_features": 256
     },
     "dense_5_up": {
-      "num_layers": 4
+        "num_layers": 4
     }
   }
 }
