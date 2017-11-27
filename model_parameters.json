@@ -1,6 +1,6 @@
 {
   "56": {
-    "num_features": 10,
+    "num_features": 12,
     "dense_1": {
         "num_layers": 4
     },
