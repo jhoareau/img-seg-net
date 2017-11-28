@@ -63,7 +63,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmax = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmax, max_outputs=1)
-        ediff = tf.abs(tf.subtract(yb, predimmax))
+        ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmax)), tf.expand_dims(masked_weights, axis=-1))
         tf.summary.image("Error difference", ediff, max_outputs=1)
         tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
 
