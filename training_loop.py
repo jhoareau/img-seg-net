@@ -13,6 +13,30 @@ final_resized = 224
 learning_rate = 0.001
 model_version = 56
 
+# Remap colours
+#_cmap = {
+#    0: (128, 128, 128),    # sky
+#    1: (128, 0, 0),        # building
+#    2: (192, 192, 128),    # column_pole
+#    3: (128, 64, 128),     # road
+#    4: (0, 0, 192),        # sidewalk
+#    5: (128, 128, 0),      # Tree
+#    6: (192, 128, 128),    # SignSymbol
+#    7: (64, 64, 128),      # Fence
+#    8: (64, 0, 128),       # Car
+#    9: (64, 64, 0),        # Pedestrian
+#    10: (0, 128, 192),     # Bicyclist
+#    11: (0, 0, 0)}         # Void
+_cmap = [(128, 128, 128), (128, 0, 0), (192, 192, 128), (128, 64, 128), (0, 0, 192), (128, 128, 0), (192, 128, 128), (64, 64, 128), (64, 0, 128), (64, 64, 0), (0, 128, 192), (0, 0, 0)]
+
+def colorize(grayimg):
+    gray_int=tf.cast(grayimg, tf.int32) # Cast to integer to allow to function as index
+    gray_remapped=tf.gather(_cmap, gray_int) # Map gray to rgb
+    gray_sq = tf.squeeze(gray_remapped) # Remove the dimension of 1
+    return tf.cast(gray_sq, tf.float32) # Return as a float
+
+
+
 with open('model_parameters.json') as params:
     params_dict = json.load(params)[repr(model_version)]
 
@@ -61,12 +85,15 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         predim = tf.nn.softmax(predictions)
         predimmax = tf.expand_dims(
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
-        predimmax = tf.divide(tf.cast(predimmax, tf.float32), 11)
-        tf.summary.image("y_hat", predimmax, max_outputs=1)
+        predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
+        tf.summary.image("y_hat", predimmaxdiv, max_outputs=1)
         ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmax)), tf.expand_dims(masked_weights, axis=-1))
         tf.summary.image("Error difference", ediff, max_outputs=1)
         tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
-
+        
+        tf.summary.image("Cy", colorize(ground_truth_batch), max_outputs=1)
+        tf.summary.image("Cy_hat", colorize(predimmax), max_outputs=1)
+        
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
