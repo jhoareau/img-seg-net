@@ -1,4 +1,6 @@
 import os
+import io as imp
+import matplotlib.pyplot as plt
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
@@ -14,20 +16,10 @@ learning_rate = 0.001
 model_version = 56
 
 # Remap colours
-#_cmap = {
-#    0: (128, 128, 128),    # sky
-#    1: (128, 0, 0),        # building
-#    2: (192, 192, 128),    # column_pole
-#    3: (128, 64, 128),     # road
-#    4: (0, 0, 192),        # sidewalk
-#    5: (128, 128, 0),      # Tree
-#    6: (192, 128, 128),    # SignSymbol
-#    7: (64, 64, 128),      # Fence
-#    8: (64, 0, 128),       # Car
-#    9: (64, 64, 0),        # Pedestrian
-#    10: (0, 128, 192),     # Bicyclist
-#    11: (0, 0, 0)}         # Void
 _cmap = [(128, 128, 128), (128, 0, 0), (192, 192, 128), (128, 64, 128), (0, 0, 192), (128, 128, 0), (192, 128, 128), (64, 64, 128), (64, 0, 128), (64, 64, 0), (0, 128, 192), (0, 0, 0)]
+_mask_labels = {0: 'sky', 1: 'building', 2: 'column_pole', 3: 'road',
+                    4: 'sidewalk', 5: 'tree', 6: 'sign', 7: 'fence', 8: 'car',
+                    9: 'pedestrian', 10: 'byciclist', 11: 'void'}
 
 def colorize(grayimg):
     gray_int=tf.cast(grayimg, tf.int32) # Cast to integer to allow to function as index
@@ -35,6 +27,32 @@ def colorize(grayimg):
     gray_sq = tf.squeeze(gray_remapped) # Remove the dimension of 1
     return tf.cast(gray_sq, tf.float32) # Return as a float
 
+# Legend
+def legend():
+    blocksize=0.1
+    plt.figure(figsize=(5, 3))
+    for i in range(len(_cmap)):
+        xoffset=0
+        yoffset=0
+        if(i>5):
+            xoffset=0.5
+            yoffset=6*blocksize
+        clr=(_cmap[i][0]/255,_cmap[i][1]/255,_cmap[i][2]/255)
+        square = plt.Rectangle((0+xoffset, i*0.1-yoffset), width=blocksize, height=blocksize, fc=clr)
+        plt.text(0.2+xoffset, 0.03+i*0.1-yoffset, _mask_labels[i], fontsize=10)
+        plt.gca().add_patch(square)
+    plt.ylim([0,0.6])
+    plt.axis('off')
+    buf = imp.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    return buf
+
+buffer = legend()
+# To TF image
+legend = tf.image.decode_png(buffer.getvalue(), channels=4)
+legend = tf.expand_dims(legend, 0)    
+    
 
 
 with open('model_parameters.json') as params:
@@ -80,19 +98,25 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     if (image_in_tensorboard):
         yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
-        tf.summary.image("x", input_batch, max_outputs=1)
         tf.summary.image("y", yb, max_outputs=1)
+        
         predim = tf.nn.softmax(predictions)
         predimmax = tf.expand_dims(
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmaxdiv, max_outputs=1)
+        
+        tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
+        
         ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmax)), tf.expand_dims(masked_weights, axis=-1))
         tf.summary.image("Error difference", ediff, max_outputs=1)
-        tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
+        
+        legend_sum = tf.summary.image("Legend", legend)
         
         tf.summary.image("Cy", colorize(ground_truth_batch), max_outputs=1)
         tf.summary.image("Cy_hat", colorize(predimmax), max_outputs=1)
+        
+        tf.summary.image("x", input_batch, max_outputs=1)
         
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
