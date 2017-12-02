@@ -51,8 +51,8 @@ def legend():
 buffer = legend()
 # To TF image
 legend = tf.image.decode_png(buffer.getvalue(), channels=4)
-legend = tf.expand_dims(legend, 0)    
-    
+legend = tf.expand_dims(legend, 0)
+
 
 
 with open('model_parameters.json') as params:
@@ -99,25 +99,25 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     if (image_in_tensorboard):
         yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
         tf.summary.image("y", yb, max_outputs=1)
-        
+
         predim = tf.nn.softmax(predictions)
         predimmax = tf.expand_dims(
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmaxdiv, max_outputs=1)
-        
+
         tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
-        
-        ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmax)), tf.expand_dims(masked_weights, axis=-1))
-        tf.summary.image("Error difference", ediff, max_outputs=1)
-        
+
+        ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmaxdiv)), tf.expand_dims(masked_weights, axis=-1))
+        tf.summary.image("Error_difference", ediff, max_outputs=1)
+
         legend_sum = tf.summary.image("Legend", legend)
-        
+
         tf.summary.image("Cy", colorize(ground_truth_batch), max_outputs=1)
         tf.summary.image("Cy_hat", colorize(predimmax), max_outputs=1)
-        
+
         tf.summary.image("x", input_batch, max_outputs=1)
-        
+
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
