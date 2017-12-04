@@ -45,19 +45,21 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
     predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
 
-    tf.summary.image("x", input_batch, max_outputs=n_images)
-    tf.summary.image("y", yb, max_outputs=n_images)
-    tf.summary.image("y_hat", predimmaxdiv, max_outputs=n_images)
-    tf.summary.image("Cy", colorize(ground_truth_batch), max_outputs=n_images)
-    tf.summary.image("Cy_hat", colorize(predimmax), max_outputs=n_images)
-    tf.summary.image("Legend", legend, max_outputs=1)
-
+    
     # We calculate the loss
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
         params_dict['output_classes'])
 
     masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
+
+    # Concat all four images into one grid
+    ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmaxdiv)), tf.expand_dims(masked_weights, axis=-1))
+    annots=tf.concat([colorize(ground_truth_batch),colorize(predimmax)],2)
+    img_and_err=tf.multiply(tf.concat([input_batch,tf.image.grayscale_to_rgb(ediff)],2),255) # Multiply by 255, because it actually outputs 0.0 to 1.0
+    aio=tf.concat([img_and_err,annots],1)
+    tf.summary.image("All_in_one", aio, max_outputs=n_images)
+    tf.summary.image("Legend", legend, max_outputs=1)
 
     slim.losses.softmax_cross_entropy(
         predictions,
