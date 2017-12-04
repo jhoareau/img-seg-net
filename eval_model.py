@@ -68,6 +68,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     slim.evaluation.evaluate_once(
         '',
-        'train_aws/model.ckpt-1693',
+        'train_aws/model.ckpt-62424',
         'val'
     )
