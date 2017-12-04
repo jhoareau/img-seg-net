@@ -9,7 +9,7 @@ from colorise_camvid import colorize, legend, _mask_labels
 from iou_calculation import intersection_over_union
 slim = tf.contrib.slim
 
-n_images = 5
+n_images = 30
 
 batch_size, height, width, nchannels = n_images, 360, 480, 3
 final_resized = 224
@@ -35,7 +35,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     ground_truth_batch = tf.reshape(ybatch, shape=(batch_size, final_resized, final_resized, 1))
 
     # Obtain the prediction
-    predictions = net(input_batch, params_dict)
+    predictions = net(input_batch, params_dict, is_training=False)
     predim = tf.nn.softmax(predictions)
     predimmax = tf.expand_dims(
         tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
@@ -43,7 +43,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
     predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
 
-    
     # We calculate the loss
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
