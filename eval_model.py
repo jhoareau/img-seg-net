@@ -5,6 +5,7 @@ import tensorflow as tf
 from network import net
 import json
 from data_utils import *
+from colorise_camvid import colorize, legend
 slim = tf.contrib.slim
 
 n_images = 5
@@ -42,19 +43,26 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     predim = tf.nn.softmax(predictions)
     predimmax = tf.expand_dims(
         tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
-    predimmax = tf.divide(tf.cast(predimmax, tf.float32), 11)
+    predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
 
     tf.summary.image("x", input_batch, max_outputs=n_images)
     tf.summary.image("y", yb, max_outputs=n_images)
-    tf.summary.image("y_hat", predimmax, max_outputs=n_images)
+    tf.summary.image("y_hat", predimmaxdiv, max_outputs=n_images)
+    tf.summary.image("Cy", colorize(ground_truth_batch), max_outputs=n_images)
+    tf.summary.image("Cy_hat", colorize(predimmax), max_outputs=n_images)
+    tf.summary.image("Legend", legend, max_outputs=1)
 
     # We calculate the loss
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
         params_dict['output_classes'])
+
+    masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
+
     slim.losses.softmax_cross_entropy(
         predictions,
-        one_hot_labels)
+        one_hot_labels,
+        weights=masked_weights)
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
 
