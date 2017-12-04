@@ -31,6 +31,14 @@ tfrec_dump(train_paths, "trainset.tfrec")
 tfsdataset = slim_dataset("trainset.tfrec", 367)
 
 gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
+# Create the initial assignment op
+checkpoint_path = 'train_aws/model.ckpt-62424'
+variables_to_restore = slim.get_model_variables()
+init_assign_op, init_feed_dict = slim.assign_from_checkpoint(
+  checkpoint_path, variables_to_restore)
+# Create an initial assignment function.
+def InitAssignFn(sess):
+  sess.run(init_assign_op, init_feed_dict)
 # Training loop
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     log_dir = 'train'
@@ -88,6 +96,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         [np.prod(v.shape) for v in tf.trainable_variables()]))
     final_loss = slim.learning.train(
         train_op, logdir=log_dir,
+        init_fn=InitAssignFn,
         save_interval_secs=300,
         save_summaries_secs=30,
         log_every_n_steps=100)

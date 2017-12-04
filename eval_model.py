@@ -5,7 +5,8 @@ import tensorflow as tf
 from network import net
 import json
 from data_utils import *
-from colorise_camvid import colorize, legend
+from colorise_camvid import colorize, legend, _mask_labels
+from iou_calculation import intersection_over_union
 slim = tf.contrib.slim
 
 n_images = 5
@@ -34,15 +35,12 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     ground_truth_batch = tf.reshape(ybatch, shape=(batch_size, final_resized, final_resized, 1))
 
     # Obtain the prediction
-    predictions = net(input_batch, params_dict, is_training=False)
+    predictions = net(input_batch, params_dict)
     predim = tf.nn.softmax(predictions)
     predimmax = tf.expand_dims(
         tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
 
     yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
-    predim = tf.nn.softmax(predictions)
-    predimmax = tf.expand_dims(
-        tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
     predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
 
     
@@ -67,6 +65,12 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         weights=masked_weights)
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
+
+    iou_array, mean_iou = intersection_over_union(ground_truth_batch, predimmax, params_dict['output_classes'], masked_weights)
+    tf.summary.scalar('mean_IoU', mean_iou)
+    class_labels = tf.convert_to_tensor(np.array(list(_mask_labels.values())), tf.string)
+    iou_per_class = tf.stack([class_labels, tf.as_string(iou_array, precision=2)], axis=1)
+    tf.summary.text('IoU per class', iou_per_class)
 
     slim.evaluation.evaluate_once(
         '',
