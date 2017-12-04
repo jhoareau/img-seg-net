@@ -37,7 +37,7 @@ def create_layer(input, num_features, scope, kernel_size=3, p=0.2, is_training=T
                        kernel_size, weights_initializer=weight_initializer,
                        weights_regularizer=l2_reg,
                        scope=(scope + "/conv"), activation_fn=None)
-    dropout = slim.dropout(conv, p, scope=(scope + "/dropout"), is_training=is_training)
+    dropout = slim.dropout(conv, keep_prob=1-p, scope=(scope + "/dropout"), is_training=is_training)
     return dropout
 
 
@@ -48,7 +48,7 @@ def transition_down(input, scope, kernel_size=1, pool_size=2, p=0.2, is_training
                        kernel_size, weights_initializer=weight_initializer,
                        weights_regularizer=l2_reg,
                        scope=(scope + "/conv"), activation_fn=None)
-    dropout = slim.dropout(conv, p, scope=(scope + "/dropout"), is_training=is_training)
+    dropout = slim.dropout(conv, keep_prob=1-p, scope=(scope + "/dropout"), is_training=is_training)
     max_pool = slim.max_pool2d(
         dropout, pool_size, stride=2, scope=(scope + "/maxpool"))
     return max_pool
