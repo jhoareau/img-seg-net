@@ -9,7 +9,7 @@ from colorise_camvid import colorize, legend, _mask_labels
 from iou_calculation import intersection_over_union
 slim = tf.contrib.slim
 
-n_images = 30
+n_images = 233
 
 batch_size, height, width, nchannels = n_images, 360, 480, 3
 final_resized = 224
@@ -21,13 +21,13 @@ with open('model_parameters.json') as params:
 params_dict['input_num_features'] = 48
 params_dict['output_classes'] = 12
 
-tfrec_dump(valid_paths, "validset.tfrec")
-tfsdataset = slim_dataset("validset.tfrec", n_images)
+tfrec_dump(test_paths, "testset.tfrec")
+tfsdataset = slim_dataset("testset.tfrec", n_images)
 
 gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
 # Training loop
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
-    log_dir = 'val'
+    log_dir = 'test'
     # We load a batch and reshape to tensor
     xbatch, ybatch = batch(
         tfsdataset, batch_size=batch_size, height=height, width=width, resized=final_resized)
@@ -73,6 +73,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     slim.evaluation.evaluate_once(
         '',
-        'train_aws/model.ckpt-62424',
-        'val'
+        'train_aws/model.ckpt-98055',
+        'test'
     )
