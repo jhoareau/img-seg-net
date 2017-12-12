@@ -7,6 +7,7 @@ from network import net
 import json
 from data_utils import *
 from colorise_camvid import colorize, legend
+from new_loss import tf_ssim, tf_ms_ssim
 
 slim = tf.contrib.slim
 # This might increase training time, so set to False if desired
@@ -15,6 +16,7 @@ batch_size, height, width, nchannels = 3, 360, 480, 3
 final_resized = 224
 learning_rate = 0.001
 model_version = 56
+additional_structural_loss = True
 
 
 
@@ -31,14 +33,6 @@ tfrec_dump(train_paths, "trainset.tfrec")
 tfsdataset = slim_dataset("trainset.tfrec", 367)
 
 gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
-# Create the initial assignment op
-checkpoint_path = 'train_aws/model.ckpt-62424'
-variables_to_restore = slim.get_model_variables()
-init_assign_op, init_feed_dict = slim.assign_from_checkpoint(
-  checkpoint_path, variables_to_restore)
-# Create an initial assignment function.
-def InitAssignFn(sess):
-  sess.run(init_assign_op, init_feed_dict)
 # Training loop
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     log_dir = 'train'
@@ -64,6 +58,15 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         predictions,
         one_hot_labels,
         weights=masked_weights)
+
+    predim = tf.nn.softmax(predictions)
+    predimmax = tf.expand_dims(
+        tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
+
+    if (additional_structural_loss):
+        loss_2 = tf_ssim(predimmax, tf.cast(ground_truth_batch, tf.float32))
+        tf.losses.add_loss(loss_2)
+
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
 
@@ -71,9 +74,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         yb = tf.cast(tf.divide(ground_truth_batch, 11), tf.float32)
         tf.summary.image("y", yb, max_outputs=1)
 
-        predim = tf.nn.softmax(predictions)
-        predimmax = tf.expand_dims(
-            tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), 11)
         tf.summary.image("y_hat", predimmaxdiv, max_outputs=1)
 
@@ -96,7 +96,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
         [np.prod(v.shape) for v in tf.trainable_variables()]))
     final_loss = slim.learning.train(
         train_op, logdir=log_dir,
-        init_fn=InitAssignFn,
         save_interval_secs=300,
         save_summaries_secs=30,
         log_every_n_steps=100)
