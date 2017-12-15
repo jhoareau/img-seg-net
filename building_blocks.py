@@ -6,6 +6,14 @@ regularizers = {"beta" : slim.l2_regularizer(0.0001), "gamma": slim.l2_regulariz
 # weight_initializer = tf.contrib.layers.xavier_initializer()
 weight_initializer = tf.contrib.keras.initializers.he_uniform()
 
+def batch_wise_batch_norm(x, scope):
+    with tf.name_scope(scope):
+        batch_mean, batch_var = tf.nn.moments(x, axes=[0, 1, 2])
+        x = tf.subtract(x, batch_mean)
+        x = tf.div(x, tf.sqrt(batch_var) + 1e-6)
+        x = tf.nn.relu(x, "BatchNormRelu")
+        return x
+
 def skipped_dense_block(x, num_layers, num_features, scope, p=0.2, is_training=True):
     layers = []
     for i in range(num_layers):
@@ -30,9 +38,9 @@ def nonskipped_dense_block(x, num_layers, num_features, scope, p=0.2, is_trainin
                     name=(scope + '/output'))
 
 def create_layer(input, num_features, scope, kernel_size=3, p=0.2, is_training=True):
-    relud_batch_norm = slim.batch_norm(
-        input, activation_fn=tf.nn.relu, param_regularizers=regularizers,
-        scope=(scope + "/batchnorm"))
+    relud_batch_norm = batch_wise_batch_norm(input, scope + "/batchnorm")
+    # relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu, 
+    # param_regularizers=regularizers, scope=(scope + "/batchnorm"))
     conv = slim.conv2d(relud_batch_norm, num_features,
                        kernel_size, weights_initializer=weight_initializer,
                        weights_regularizer=l2_reg,
@@ -42,8 +50,9 @@ def create_layer(input, num_features, scope, kernel_size=3, p=0.2, is_training=T
 
 
 def transition_down(input, scope, kernel_size=1, pool_size=2, p=0.2, is_training=True):
-    relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu,
-         param_regularizers=regularizers, scope=(scope + "/batchnorm"))
+    relud_batch_norm = batch_wise_batch_norm(input, scope + "/batchnorm")
+    # relud_batch_norm = slim.batch_norm(input, activation_fn=tf.nn.relu,
+    #      param_regularizers=regularizers, scope=(scope + "/batchnorm"))
     conv = slim.conv2d(relud_batch_norm, input.shape[-1],
                        kernel_size, weights_initializer=weight_initializer,
                        weights_regularizer=l2_reg,
