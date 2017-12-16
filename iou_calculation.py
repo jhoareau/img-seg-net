@@ -30,4 +30,4 @@ def intersection_over_union(ground_truths, predictions, num_classes, weights):
             iou_array.append(iou)
 
         iou_array = tf.stack(iou_array)
-        return tf.reduce_mean(iou_array, axis=0), tf.reduce_mean(iou_array)
+        return tf.reduce_mean(iou_array, axis=0), tf.reduce_mean(iou_array) * 12/11
