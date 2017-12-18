@@ -9,7 +9,7 @@ from colorise_camvid import colorize, legend, _mask_labels
 from iou_calculation import intersection_over_union
 slim = tf.contrib.slim
 
-n_images = 233
+n_images = 2
 
 batch_size, height, width, nchannels = n_images, 360, 480, 3
 final_resized = 224
@@ -52,8 +52,9 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     # Concat all four images into one grid
     ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmaxdiv)), tf.expand_dims(masked_weights, axis=-1))
+    norm_ediff = tf.ceil(ediff)
     annots=tf.concat([colorize(ground_truth_batch),colorize(predimmax)],2)
-    img_and_err=tf.multiply(tf.concat([input_batch,tf.image.grayscale_to_rgb(ediff)],2),255) # Multiply by 255, because it actually outputs 0.0 to 1.0
+    img_and_err=tf.multiply(tf.concat([input_batch,tf.image.grayscale_to_rgb(norm_ediff)],2),255) # Multiply by 255, because it actually outputs 0.0 to 1.0
     aio=tf.concat([img_and_err,annots],1)
     tf.summary.image("All_in_one", aio, max_outputs=n_images)
     tf.summary.image("Legend", legend, max_outputs=1)
@@ -65,6 +66,9 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
 
+    accuracy = tf.reduce_mean(tf.cast(norm_ediff, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
+
     iou_array, mean_iou = intersection_over_union(ground_truth_batch, predimmax, params_dict['output_classes'], masked_weights)
     tf.summary.scalar('mean_IoU', mean_iou)
     class_labels = tf.convert_to_tensor(np.array(list(_mask_labels.values())), tf.string)
@@ -73,6 +77,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
     slim.evaluation.evaluate_once(
         '',
-        'train_aws/model.ckpt-98055',
+        'train_aws_nbs/model.ckpt-10963',
         'test'
     )
