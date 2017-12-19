@@ -18,8 +18,6 @@ learning_rate = 0.001
 model_version = 56
 additional_structural_loss = True
 
-
-
 with open('model_parameters.json') as params:
     params_dict = json.load(params)[repr(model_version)]
 
@@ -89,7 +87,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
         tf.summary.image("x", input_batch, max_outputs=1)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, decay=0.995)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
     print("Number of trainable parameters", np.sum(

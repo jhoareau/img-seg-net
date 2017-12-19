@@ -123,7 +123,7 @@ def slim_dataset(tfrec_location, num_samples):
 
     return dataset
 
-def random_crop_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
+def random_flip_crop_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
     """Randomly crops `image` together with `labels`.
     Based on <https://stackoverflow.com/questions/42147427/tensorflow-how-to-randomly-crop-input-images-and-labels-in-the-same-way>
 
@@ -144,7 +144,8 @@ def random_crop_image_and_labels(image, labels, feature_maps_image, feature_maps
         size=[height, width, feature_maps_image + feature_maps_annot],
         seed=seed)
     combined_crop = tf.reshape(combined_crop, shape=(height, width, feature_maps_image + feature_maps_annot))
-    crop_feature_maps = tf.unstack(combined_crop, axis=-1)
+    maybe_flipped_images = tf.image.random_flip_left_right(combined_crop)
+    crop_feature_maps = tf.unstack(maybe_flipped_images, axis=-1)
     return tf.stack(crop_feature_maps[:feature_maps_image], axis=-1), tf.stack(crop_feature_maps[feature_maps_image:], axis=-1)
 
 # Convert to a tensor and resize
