@@ -32,7 +32,7 @@
         "num_features": 288
     },
     "dense_bottleneck": {
-        "num_layers": 15
+        "num_layers": 4
     },
     "tu1": {
         "num_features": 384

@@ -157,7 +157,7 @@ def imagepreprocessor(image, annot, height, width, scope=None):
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         if annot.dtype != tf.float32:
             annot = tf.image.convert_image_dtype(annot, dtype=tf.float32)
-        image, annot = random_crop_image_and_labels(
+        image, annot = random_flip_crop_image_and_labels(
                                 image, annot,
                                 feature_maps_image=3,
                                 feature_maps_annot=1,
