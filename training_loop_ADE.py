@@ -1,5 +1,4 @@
 import os
-import io as imp
 import matplotlib.pyplot as plt
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -13,8 +12,8 @@ image_in_tensorboard = True
 batch_size, height, width, nchannels = 3, 360, 480, 3
 final_resized = 224
 learning_rate = 0.001
-model_version = 103
-classes=150
+model_version = 56
+classes=2
 datasetfilename="trainset_ADE.tfrec"
 with open('model_parameters.json') as params:
     params_dict = json.load(params)[repr(model_version)]
@@ -24,14 +23,15 @@ params_dict['input_num_features'] = 48
 params_dict['output_classes'] = classes
 
 # Save training data in tfrec and load it into a slim dataset
+datasetfilename="trainset_ADE_onlyhuman.tfrec"
 if not os.path.isfile(datasetfilename):
     tfrec_dump("training", datasetfilename)
-tfsdataset = slim_dataset(datasetfilename, 20210)
+tfsdataset = slim_dataset(datasetfilename, 5069)#*2)#20210)
 
 gpu_opts = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
 # Training loop
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
-    log_dir = 'train_ADE'
+    log_dir = 'train_ADE_undersampled_onlyhuman'
     # We load a batch and reshape to tensor
     xbatch, ybatch = batch(
         tfsdataset, batch_size=batch_size, height=height, width=width, resized=final_resized)
@@ -47,13 +47,13 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     one_hot_labels = slim.one_hot_encoding(
         tf.squeeze(ground_truth_batch),
         params_dict['output_classes'])
-
-    masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
-
     slim.losses.softmax_cross_entropy(
         predictions,
-        one_hot_labels,
-        weights=masked_weights)
+        one_hot_labels)
+        
+    predim = tf.nn.softmax(predictions)
+    predimmax = tf.expand_dims(tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
+
     total_loss = slim.losses.get_total_loss()
     tf.summary.scalar('loss', total_loss)
 
@@ -66,10 +66,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
             tf.cast(tf.argmax(predim, axis=3), tf.float32), -1)
         predimmaxdiv = tf.divide(tf.cast(predimmax, tf.float32), classes)
         tf.summary.image("y_hat", predimmaxdiv, max_outputs=1)
-        
-        tf.summary.image("Mask", tf.expand_dims(masked_weights, axis=-1), max_outputs=1)
-        
-        ediff = tf.minimum(tf.abs(tf.subtract(yb, predimmax)), tf.expand_dims(masked_weights, axis=-1))
+                
+        ediff = tf.abs(tf.subtract(yb, predimmax))
         tf.summary.image("Error difference", ediff, max_outputs=1)
 
         tf.summary.image("x", input_batch, max_outputs=1)

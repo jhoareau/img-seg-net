@@ -2,16 +2,7 @@
 # http://warmspringwinds.github.io/tensorflow/tf-slim/2016/12/21/tfrecords-guide/
 # https://kwotsin.github.io/tech/2017/01/29/tfrecords.html
 
-# Saving a dataset as tfrec can be done by:
-#     tfrec_dump(paths, "filename.tfrec")
-#         paths : either test_paths, train_paths, or valid_paths
-#
-
-# A batch can be loaded as follows:
-#     tfsdataset = slim_dataset("filename.tfrec", num_samples)
-#     images, _, annotations, _ = batch(tfsdataset, batch_size=3, height=360, width=480, resized=224)
-#
-
+# Remember to change the paths here in the parsepaths function
 from PIL import Image
 import numpy as np
 import skimage.io as io
@@ -25,14 +16,11 @@ slim = tf.contrib.slim
 
 # Functions to store images, integers and strings in Tensorrec format
 
-
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
-
 
 reader = tf.TFRecordReader
 
@@ -49,7 +37,20 @@ def parsepaths(settype): # settype is either string "training" or "validation"
 def tfrec_dump(dataset_type, save_path):  # Either test_paths, train_paths or valid_paths
     filename_pairs = parsepaths(dataset_type)
     writer = tf.python_io.TFRecordWriter(save_path)
+    with open("humansin"+dataset_type+".txt") as f:
+        humanimgs = f.read().splitlines()        
+    hi=[]
+    nhi=[]
     for img_path, annotation_path, file_name in filename_pairs:
+        if(file_name in humanimgs):
+            hi.append([img_path, annotation_path, file_name])
+        else:
+            nhi.append([img_path, annotation_path, file_name])
+            
+    # Here we can assure that the amount of human images is equal to the amount of non-human images
+    balanced=hi#+nhi[:len(hi)]
+    np.random.shuffle(balanced)
+    for img_path, annotation_path, file_name in balanced:
         img = tf.gfile.FastGFile(img_path, 'rb').read()
         annotation = tf.gfile.FastGFile(annotation_path, 'rb').read()
         imgarr = np.array(Image.open(img_path))
@@ -71,7 +72,6 @@ def tfrec_dump(dataset_type, save_path):  # Either test_paths, train_paths or va
     writer.close()
 
 # Build the tfslim decoder and tfslim dataset
-
 
 def slim_dataset(tfrec_location, num_samples):
     # How to interpret the dict keys
@@ -104,60 +104,6 @@ def slim_dataset(tfrec_location, num_samples):
 
     return dataset
 
-def random_crop_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
-    """Randomly crops `image` together with `labels`.
-    Based on <https://stackoverflow.com/questions/42147427/tensorflow-how-to-randomly-crop-input-images-and-labels-in-the-same-way>
-
-    Args:
-    image: A Tensor with shape [D_1, ..., D_K, N]
-    labels: A Tensor with shape [D_1, ..., D_K, M]
-    size: A Tensor with shape [K] indicating the crop size.
-    Returns:
-    A tuple of (cropped_image, cropped_label).
-    """
-    seed = random.randint(0, 1e10)
-    combined = tf.concat([image, labels], axis=-1)
-    image_shape = tf.shape(image)
-    combined_pad = tf.image.pad_to_bounding_box(
-      combined, 0, 0,
-      tf.maximum(height, image_shape[0]),
-      tf.maximum(width, image_shape[1]))
-    last_label_dim = tf.shape(labels)[-1]
-    last_image_dim = tf.shape(image)[-1]
-    combined_crop = tf.random_crop(
-        combined_pad,
-        size=[height, width, feature_maps_image + feature_maps_annot],
-        seed=seed)
-    combined_crop = tf.reshape(combined_crop, shape=(height, width, feature_maps_image + feature_maps_annot))
-    crop_feature_maps = tf.unstack(combined_crop, axis=-1)
-    return tf.stack(crop_feature_maps[:feature_maps_image], axis=-1), tf.stack(crop_feature_maps[feature_maps_image:], axis=-1)
-
-def resize_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
-    """Pads and Resizes `image` together with `labels`.
-    Based on <https://stackoverflow.com/questions/42147427/tensorflow-how-to-randomly-crop-input-images-and-labels-in-the-same-way>
-
-    Args:
-    image: A Tensor with shape [D_1, ..., D_K, N]
-    labels: A Tensor with shape [D_1, ..., D_K, M]
-    size: A Tensor with shape [K] indicating the crop size.
-    Returns:
-    A tuple of (cropped_image, cropped_label).
-    """
-    combined = tf.concat([image, labels], axis=-1)
-    image_shape = tf.shape(image)
-    combined_pad = tf.image.pad_to_bounding_box(
-      combined, 0, 0,
-      tf.maximum(image_shape[0], image_shape[1]),
-      tf.maximum(image_shape[0], image_shape[1]))
-    last_label_dim = tf.shape(labels)[-1]
-    last_image_dim = tf.shape(image)[-1]
-    combined_resize = tf.image.resize_images(
-        combined_pad,
-        size=[height, width])
-        #Default ResizeMethod.BILINEAR
-    combined_resize = tf.reshape(combined_resize, shape=(height, width, feature_maps_image + feature_maps_annot))
-    crop_feature_maps = tf.unstack(combined_resize, axis=-1)
-    return tf.stack(crop_feature_maps[:feature_maps_image], axis=-1), tf.stack(crop_feature_maps[feature_maps_image:], axis=-1)
     
 def resizecrop_image_and_labels(image, labels, feature_maps_image, feature_maps_annot, height, width):
     """Resizes and randomly crops `image` together with `labels`.
@@ -184,7 +130,6 @@ def resizecrop_image_and_labels(image, labels, feature_maps_image, feature_maps_
         combined,
         size=[res_h, res_w])
         #Default ResizeMethod.BILINEAR
-
     last_label_dim = tf.shape(labels)[-1]
     last_image_dim = tf.shape(image)[-1]
     combined_crop = tf.random_crop(
@@ -192,14 +137,14 @@ def resizecrop_image_and_labels(image, labels, feature_maps_image, feature_maps_
         size=[height, width, feature_maps_image + feature_maps_annot],
         seed=seed)
     combined_crop = tf.reshape(combined_crop, shape=(height, width, feature_maps_image + feature_maps_annot))
-    crop_feature_maps = tf.unstack(combined_crop, axis=-1)
+    maybe_flipped_images = tf.image.random_flip_left_right(combined_crop)
+    crop_feature_maps = tf.unstack(maybe_flipped_images, axis=-1)
     return tf.stack(crop_feature_maps[:feature_maps_image], axis=-1), tf.stack(crop_feature_maps[feature_maps_image:], axis=-1)
     
 # Convert to a tensor and resize
 def imagepreprocessor(image, annot, height, width, scope=None):
     scopename="crop"
     with tf.name_scope(scope, scopename, [image, annot, height, width]):
-        # First the image
         if image.dtype != tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         if annot.dtype != tf.float32:
@@ -213,11 +158,9 @@ def imagepreprocessor(image, annot, height, width, scope=None):
     return tf.expand_dims(image, 0), tf.expand_dims(tf.image.convert_image_dtype(annot, dtype=tf.uint8), 0)
 
 # Load a batch
-
-
 def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize to a multiple of 32
     IMAGE_HEIGHT = IMAGE_WIDTH = resized
-
+    
     # First create the data_provider object
     data_provider = slim.dataset_data_provider.DatasetDataProvider(
         dataset,
@@ -230,16 +173,6 @@ def batch(dataset, batch_size=3, height=360, width=480, resized=224):  # Resize 
     # Do image preprocessing
     image, annotation = imagepreprocessor(
         image=raw_image, annot=raw_annotation, height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
-
-    # Reshape and batch
-    '''raw_image = tf.expand_dims(raw_image, 0)
-    raw_image = tf.image.resize_nearest_neighbor(raw_image, [height, width])
-    raw_image = tf.squeeze(raw_image)
-
-    raw_annotation = tf.expand_dims(raw_annotation, 0)
-    raw_annotation = tf.image.resize_nearest_neighbor(
-        raw_annotation, [height, width])
-    raw_annotation = tf.squeeze(raw_annotation)'''
 
     # Loaded batch
     images, annotations = tf.train.batch(
