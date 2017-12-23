@@ -53,7 +53,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
     masked_weights = 1 - tf.unstack(one_hot_labels, axis=-1)[-1]
 
     slim.losses.softmax_cross_entropy(
-        predictions,
+        tf.squeeze(predictions),
         one_hot_labels,
         weights=masked_weights)
 
@@ -87,7 +87,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
         tf.summary.image("x", input_batch, max_outputs=1)
 
-    optimizer = tf.train.AdapOptimizer(learning_rate=learning_rate)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
     print("Number of trainable parameters", np.sum(
