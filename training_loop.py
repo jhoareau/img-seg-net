@@ -12,9 +12,9 @@ from new_loss import tf_ssim, tf_ms_ssim
 slim = tf.contrib.slim
 # This might increase training time, so set to False if desired
 image_in_tensorboard = True
-batch_size, height, width, nchannels = 3, 360, 480, 3
+batch_size, height, width, nchannels = 1, 360, 480, 3
 final_resized = 224
-learning_rate = 0.001
+learning_rate = 0.0001
 model_version = 56
 additional_structural_loss = True
 
@@ -87,7 +87,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_opts)) as sess:
 
         tf.summary.image("x", input_batch, max_outputs=1)
 
-    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, decay=0.995)
+    optimizer = tf.train.AdapOptimizer(learning_rate=learning_rate)
     train_op = slim.learning.create_train_op(
         total_loss, optimizer, summarize_gradients=False)
     print("Number of trainable parameters", np.sum(
