@@ -28,8 +28,8 @@ original_images = []
 
 def parsepaths(settype): # settype is either string "training" or "validation"
     # Load image and notations in separate lists
-    annot=sorted(glob.glob("../ADEChallengeData2016/annotations/"+settype+"/*.png"))
-    images=sorted(glob.glob("../ADEChallengeData2016/images/"+settype+"/*.jpg"))
+    annot=sorted(glob.glob("../../ADEChallengeData2016/annotations/converted_"+settype+"/*.png"))
+    images=sorted(glob.glob("../../ADEChallengeData2016/images/"+settype+"/*.jpg"))
     n=[re.findall(r"(ADE_[A-z0-9_]*).jpg",i)[0] for i in images]
     return zip(images, annot, n)
 
