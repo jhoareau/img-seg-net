@@ -26,16 +26,16 @@ reader = tf.TFRecordReader
 
 original_images = []
 
-def parsepaths(settype): # settype is either string "training" or "validation"
+def parsepaths(settype, ADEDIR): # settype is either string "training" or "validation"
     # Load image and notations in separate lists
-    annot=sorted(glob.glob("../../ADEChallengeData2016/annotations/converted_"+settype+"/*.png"))
-    images=sorted(glob.glob("../../ADEChallengeData2016/images/"+settype+"/*.jpg"))
+    annot=sorted(glob.glob(ADEDIR+"/annotations/converted_"+settype+"/*.png"))
+    images=sorted(glob.glob(ADEDIR+"/images/"+settype+"/*.jpg"))
     n=[re.findall(r"(ADE_[A-z0-9_]*).jpg",i)[0] for i in images]
     return zip(images, annot, n)
 
 
-def tfrec_dump(dataset_type, save_path):  # Either test_paths, train_paths or valid_paths
-    filename_pairs = parsepaths(dataset_type)
+def tfrec_dump(dataset_type, save_path, ADEDIR="../../ADEChallengeData2016"):  # Either test_paths, train_paths or valid_paths
+    filename_pairs = parsepaths(dataset_type, ADEDIR)
     writer = tf.python_io.TFRecordWriter(save_path)
     with open("humansin"+dataset_type+".txt") as f:
         humanimgs = f.read().splitlines()        
